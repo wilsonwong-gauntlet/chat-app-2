@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { pusherClient } from '@/lib/pusher'
+import { useUser } from '@clerk/nextjs'
 import type { Message, DirectMessage } from '@/types'
+import MessageReactions from './MessageReactions'
 
 interface MessagesProps {
   initialMessages: (Message | DirectMessage)[]
@@ -22,6 +24,9 @@ export default function Messages({
 }: MessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { user } = useUser()
+
+  const [messages, setMessages] = useState<(Message | DirectMessage)[]>(initialMessages)
 
   useEffect(() => {
     if (isDM && currentUserId) {
@@ -37,42 +42,79 @@ export default function Messages({
       }
     } else if (channelId) {
       const channel = pusherClient.subscribe(`channel-${channelId}`)
-      channel.bind('new-message', () => {
-        router.refresh()
-      })
+      
+      channel.bind('new-message', (newMessage: Message) => {
+        setMessages((current) => [...current, newMessage]);
+      });
+
+      channel.bind('message-updated', (updatedMessage: Message) => {
+        setMessages((current) =>
+          current.map((msg) =>
+            msg.id === updatedMessage.id ? updatedMessage : msg
+          )
+        );
+      });
 
       return () => {
-        channel.unbind('new-message')
-        pusherClient.unsubscribe(`channel-${channelId}`)
+        pusherClient.unsubscribe(`channel-${channelId}`);
       }
     }
   }, [channelId, userId, isDM, currentUserId, router])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [initialMessages])
+  }, [messages])
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/messages/react', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messageId,
+          emoji,
+          userId: user.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to add reaction');
+      }
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {initialMessages.map((message) => {
+      {messages.map((message) => {
         const user = 'sender' in message ? message.sender : message.user
         return (
-          <div key={message.id} className="flex items-start mb-4">
+          <div key={message.id} className="flex items-start gap-3 group">
             <img
               src={user.avatar || '/default-avatar.png'}
               alt={`${user.firstName} ${user.lastName}`}
-              className="w-8 h-8 rounded-full mr-2"
+              className="w-10 h-10 rounded-full"
             />
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium">
+                <span className="font-semibold">
                   {user.firstName} {user.lastName}
-                </p>
-                <span className="text-xs text-gray-500">
+                </span>
+                <span className="text-sm text-gray-500">
                   {new Date(message.createdAt).toLocaleTimeString()}
                 </span>
               </div>
-              <p className="text-sm">{message.content}</p>
+              <p className="mt-1">{message.content}</p>
+              <MessageReactions 
+                message={message}
+                onReact={handleReaction}
+              />
             </div>
           </div>
         )

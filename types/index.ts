@@ -16,6 +16,7 @@ export interface Message {
   createdAt: Date
   updatedAt: Date
   user: User
+  reactions?: Reaction[]
 }
 
 export interface DirectMessage {
@@ -27,4 +28,9 @@ export interface DirectMessage {
   updatedAt: Date
   sender: User
   receiver: User
-} 
+}
+
+export interface Reaction {
+  emoji: string;
+  userId: string;
+}

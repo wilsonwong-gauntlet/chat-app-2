@@ -57,6 +57,7 @@ model Message {
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  reactions Reaction[]
 }
 
 model DirectMessage {
@@ -68,4 +69,15 @@ model DirectMessage {
   receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  userId    String
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, messageId, emoji])
 }
