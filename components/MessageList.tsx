@@ -5,7 +5,8 @@ import { pusherClient } from '@/lib/pusher'
 
 interface User {
   id: string
-  name: string
+  firstName: string
+  lastName: string
   email: string
   avatar: string | null
 }
@@ -46,12 +47,12 @@ export default function MessageList({ initialMessages, channelId }: MessageListP
         <div key={message.id} className="flex items-start gap-3">
           <img
             src={message.user.avatar || '/default-avatar.png'}
-            alt={message.user.name}
+            alt={`${message.user.firstName} ${message.user.lastName}`}
             className="w-10 h-10 rounded-full"
           />
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{message.user.name}</span>
+              <span className="font-semibold">{message.user.firstName} {message.user.lastName}</span>
               <span className="text-sm text-gray-500">
                 {new Date(message.createdAt).toLocaleTimeString()}
               </span>

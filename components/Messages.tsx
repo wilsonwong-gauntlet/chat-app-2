@@ -57,20 +57,22 @@ export default function Messages({
       {initialMessages.map((message) => {
         const user = 'sender' in message ? message.sender : message.user
         return (
-          <div key={message.id} className="flex items-start gap-3">
+          <div key={message.id} className="flex items-start mb-4">
             <img
               src={user.avatar || '/default-avatar.png'}
-              alt={user.name}
-              className="w-10 h-10 rounded-full"
+              alt={`${user.firstName} ${user.lastName}`}
+              className="w-8 h-8 rounded-full mr-2"
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{user.name}</span>
-                <span className="text-sm text-gray-500">
+                <p className="font-medium">
+                  {user.firstName} {user.lastName}
+                </p>
+                <span className="text-xs text-gray-500">
                   {new Date(message.createdAt).toLocaleTimeString()}
                 </span>
               </div>
-              <p className="mt-1">{message.content}</p>
+              <p className="text-sm">{message.content}</p>
             </div>
           </div>
         )

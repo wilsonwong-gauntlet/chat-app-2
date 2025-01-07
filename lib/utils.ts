@@ -17,13 +17,15 @@ export async function syncUser() {
   return prisma.user.upsert({
     where: { id: userId },
     update: {
-      name: `${clerkUser.firstName} ${clerkUser.lastName}`.trim(),
+      firstName: clerkUser.firstName || '',
+      lastName: clerkUser.lastName || '',
       email: clerkUser.emailAddresses[0]?.emailAddress || '',
       avatar: clerkUser.imageUrl,
     },
     create: {
       id: userId,
-      name: `${clerkUser.firstName} ${clerkUser.lastName}`.trim(),
+      firstName: clerkUser.firstName || '',
+      lastName: clerkUser.lastName || '',
       email: clerkUser.emailAddresses[0]?.emailAddress || '',
       avatar: clerkUser.imageUrl,
     },

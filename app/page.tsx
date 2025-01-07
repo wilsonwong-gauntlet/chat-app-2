@@ -26,7 +26,7 @@ export default async function Home({ searchParams }: PageProps) {
   // Get all users for DM functionality
   const users = await prisma.user.findMany({
     orderBy: {
-      name: 'asc',
+      firstName: "asc",
     },
   })
 

@@ -17,6 +17,12 @@ export default async function DirectMessageArea({ userId }: Props) {
 
   const otherUser = await prisma.user.findUnique({
     where: { id: userId },
+    select: {
+      firstName: true,
+      lastName: true,
+      avatar: true,
+      email: true,
+    },
   })
 
   if (!otherUser) {
@@ -51,10 +57,10 @@ export default async function DirectMessageArea({ userId }: Props) {
         <div className="flex items-center gap-2">
           <img
             src={otherUser.avatar || '/default-avatar.png'}
-            alt={otherUser.name}
+            alt={`${otherUser.firstName} ${otherUser.lastName}`}
             className="w-8 h-8 rounded-full"
           />
-          <h2 className="text-xl font-semibold">{otherUser.name}</h2>
+          <h2 className="text-xl font-semibold">{otherUser.email}</h2>
         </div>
       </div>
       <Messages 

@@ -14,16 +14,17 @@ datasource db {
 }
 
 model User {
-  id        String    @id
-  name      String
-  email     String    @unique
-  avatar    String?
-  channels  ChannelMember[]
-  messages  Message[]
-  sentDMs     DirectMessage[] @relation("SentMessages")
-  receivedDMs DirectMessage[] @relation("ReceivedMessages")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  avatar        String?
+  channels      ChannelMember[]
+  messages      Message[]
+  sentDMs       DirectMessage[] @relation("SentMessages")
+  receivedDMs   DirectMessage[] @relation("ReceivedMessages")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Channel {
@@ -44,7 +45,7 @@ model ChannelMember {
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
 
-  @@unique([userId, channelId])
+  @@unique([userId, channelId], name: "userId_channelId")
 }
 
 model Message {
