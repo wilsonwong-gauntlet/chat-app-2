@@ -38,8 +38,17 @@ export default function Messages({
         router.refresh()
       })
 
+      channel.bind('message-updated', (updatedMessage: Message | DirectMessage) => {
+        setMessages((current) =>
+          current.map((msg) =>
+            msg.id === updatedMessage.id ? updatedMessage : msg
+          )
+        );
+      });
+
       return () => {
         channel.unbind('new-dm')
+        channel.unbind('message-updated')
         pusherClient.unsubscribe(`private-user-${currentUserId}`)
       }
     } else if (channelId) {
@@ -58,13 +67,18 @@ export default function Messages({
       });
 
       return () => {
+        channel.unbind('new-message')
+        channel.unbind('message-updated')
         pusherClient.unsubscribe(`channel-${channelId}`);
       }
     }
   }, [channelId, userId, isDM, currentUserId, router])
 
   useEffect(() => {
-    setMessages(initialMessages);
+    setMessages(initialMessages.map(msg => ({
+      ...msg,
+      reactions: msg.reactions || []
+    })));
   }, [initialMessages]);
 
   useEffect(() => {

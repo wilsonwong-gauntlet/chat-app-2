@@ -61,23 +61,27 @@ model Message {
 }
 
 model DirectMessage {
-  id        String   @id @default(cuid())
-  content   String
-  senderId  String
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  id         String     @id @default(cuid())
+  content    String
+  senderId   String
+  sender     User       @relation("SentMessages", fields: [senderId], references: [id])
   receiverId String
-  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  receiver   User       @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  reactions  Reaction[]
 }
 
 model Reaction {
-  id        String   @id @default(cuid())
-  emoji     String
-  userId    String
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id])
-  createdAt DateTime @default(now())
+  id              String         @id @default(cuid())
+  emoji           String
+  userId          String
+  messageId       String?
+  directMessageId String?
+  message         Message?       @relation(fields: [messageId], references: [id])
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id])
+  createdAt       DateTime       @default(now())
 
   @@unique([userId, messageId, emoji])
+  @@unique([userId, directMessageId, emoji])
 }

@@ -27,6 +27,7 @@ export async function GET(req: Request) {
       include: {
         sender: true,
         receiver: true,
+        reactions: true,
       },
       orderBy: {
         createdAt: 'asc',
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
       include: {
         sender: true,
         receiver: true,
+        reactions: true,
       },
     })
 

@@ -48,6 +48,7 @@ export async function GET(req: Request) {
       },
       include: {
         user: true,
+        reactions: true,
       },
       orderBy: {
         createdAt: 'asc',
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
       },
       include: {
         user: true,
+        reactions: true,
       },
     })
 

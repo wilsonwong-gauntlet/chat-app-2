@@ -28,6 +28,7 @@ export interface DirectMessage {
   updatedAt: Date
   sender: User
   receiver: User
+  reactions?: Reaction[]
 }
 
 export interface Reaction {
