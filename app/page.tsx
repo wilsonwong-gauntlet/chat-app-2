@@ -1,10 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { syncUser } from '@/lib/utils'
 import Sidebar from '@/components/Sidebar'
 import ChatArea from '@/components/ChatArea'
 import DirectMessageArea from '@/components/DirectMessageArea'
+import LandingPage from '@/components/LandingPage'
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined }
@@ -13,14 +13,15 @@ interface PageProps {
 export default async function Home({ searchParams }: PageProps) {
   const { userId } = await auth()
 
+  // Show landing page if user is not authenticated
   if (!userId) {
-    redirect('/sign-in')
+    return <LandingPage />
   }
 
   // Sync user data from Clerk
   const user = await syncUser()
   if (!user) {
-    redirect('/sign-in')
+    return <LandingPage />
   }
 
   // Get all users for DM functionality
