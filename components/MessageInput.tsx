@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Props {
-  channelId: string
+  channelId?: string
+  receiverId?: string
+  isDM?: boolean
 }
 
-export default function MessageInput({ channelId }: Props) {
+export default function MessageInput({ channelId, receiverId, isDM }: Props) {
   const [content, setContent] = useState('')
   const [isSending, setIsSending] = useState(false)
   const router = useRouter()
@@ -18,15 +20,15 @@ export default function MessageInput({ channelId }: Props) {
 
     setIsSending(true)
     try {
-      const response = await fetch('/api/messages', {
+      const endpoint = isDM ? '/api/direct-messages' : '/api/messages'
+      const body = isDM ? { content, receiverId } : { content, channelId }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content,
-          channelId,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!response.ok) throw new Error('Failed to send message')

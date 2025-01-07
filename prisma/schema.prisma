@@ -20,6 +20,8 @@ model User {
   avatar    String?
   channels  Membership[]
   messages  Message[]
+  sentDMs     DirectMessage[] @relation("SentMessages")
+  receivedDMs DirectMessage[] @relation("ReceivedMessages")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -54,6 +56,17 @@ model Message {
   user      User     @relation(fields: [userId], references: [id])
   channelId String
   channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DirectMessage {
+  id        String   @id @default(cuid())
+  content   String
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

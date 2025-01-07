@@ -4,12 +4,13 @@ import { prisma } from '@/lib/prisma'
 import { syncUser } from '@/lib/utils'
 import Sidebar from '@/components/Sidebar'
 import ChatArea from '@/components/ChatArea'
+import DirectMessageArea from '@/components/DirectMessageArea'
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { channel?: string }
-}) {
+interface PageProps {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default async function Home({ searchParams }: PageProps) {
   const { userId } = await auth()
 
   if (!userId) {
@@ -21,6 +22,13 @@ export default async function Home({
   if (!user) {
     redirect('/sign-in')
   }
+
+  // Get all users for DM functionality
+  const users = await prisma.user.findMany({
+    orderBy: {
+      name: 'asc',
+    },
+  })
 
   // Get or create general channel
   const generalChannel = await prisma.channel.upsert({
@@ -48,12 +56,25 @@ export default async function Home({
     },
   })
 
-  const channelId = searchParams.channel || generalChannel.id
+  const channelId = typeof searchParams.channel === 'string' 
+    ? searchParams.channel 
+    : generalChannel.id
+
+  const dmUserId = typeof searchParams.dm === 'string' 
+    ? searchParams.dm 
+    : undefined
 
   return (
     <div className="flex h-screen">
-      <Sidebar currentChannelId={channelId} />
-      <ChatArea channelId={channelId} />
+      <Sidebar 
+        currentChannelId={!dmUserId ? channelId : undefined} 
+        users={users} 
+      />
+      {dmUserId ? (
+        <DirectMessageArea userId={dmUserId} />
+      ) : (
+        <ChatArea channelId={channelId} />
+      )}
     </div>
   )
 }
