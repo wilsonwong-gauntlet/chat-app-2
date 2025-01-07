@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar'
 import ChatArea from '@/components/ChatArea'
 import DirectMessageArea from '@/components/DirectMessageArea'
 import LandingPage from '@/components/LandingPage'
+import Header from '@/components/Header'
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined }
@@ -68,16 +69,19 @@ export default async function Home({ searchParams }: PageProps) {
     : undefined
 
   return (
-    <div className="flex h-screen">
-      <Sidebar 
-        currentChannelId={!dmUserId ? channelId : undefined} 
-        users={users} 
-      />
-      {dmUserId ? (
-        <DirectMessageArea userId={dmUserId} />
-      ) : (
-        <ChatArea channelId={channelId} />
-      )}
+    <div className="flex flex-col h-screen">
+      <Header />
+      <div className="flex flex-1">
+        <Sidebar 
+          currentChannelId={!dmUserId ? channelId : undefined} 
+          users={users} 
+        />
+        {dmUserId ? (
+          <DirectMessageArea userId={dmUserId} />
+        ) : (
+          <ChatArea channelId={channelId} />
+        )}
+      </div>
     </div>
   )
 }
