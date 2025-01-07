@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { pusherClient } from '@/lib/pusher'
 
 interface User {
@@ -16,33 +17,39 @@ interface Message {
   userId: string
   channelId: string
   createdAt: Date
-  updatedAt: Date
   user: User
 }
 
-interface MessageListProps {
+interface MessagesProps {
   initialMessages: Message[]
   channelId: string
 }
 
-export default function MessageList({ initialMessages, channelId }: MessageListProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+export default function Messages({ initialMessages, channelId }: MessagesProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const channel = pusherClient.subscribe(`channel-${channelId}`)
     
-    channel.bind('new-message', (newMessage: Message) => {
-      setMessages((current) => [...current, newMessage])
+    channel.bind('new-message', () => {
+      router.refresh()
     })
 
     return () => {
+      channel.unbind('new-message')
       pusherClient.unsubscribe(`channel-${channelId}`)
     }
-  }, [channelId])
+  }, [channelId, router])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [initialMessages])
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((message) => (
+      {initialMessages.map((message) => (
         <div key={message.id} className="flex items-start gap-3">
           <img
             src={message.user.avatar || '/default-avatar.png'}
@@ -60,7 +67,7 @@ export default function MessageList({ initialMessages, channelId }: MessageListP
           </div>
         </div>
       ))}
+      <div ref={messagesEndRef} />
     </div>
   )
-}
-
+} 

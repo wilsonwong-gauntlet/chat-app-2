@@ -3,36 +3,43 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  // Create a test user with your Clerk user ID
+  // Create a test user (using a fixed ID for seeding)
   const user = await prisma.user.upsert({
-    where: { id: 'user_2dBwXDVVtPe1kcRgPt6Qh8p9XpN' }, // Replace with your Clerk user ID
-    update: {},
+    where: { id: 'seed_user' },
+    update: {
+      name: 'Seed User',
+      email: 'seed@example.com',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=seed',
+    },
     create: {
-      id: 'user_2dBwXDVVtPe1kcRgPt6Qh8p9XpN', // Replace with your Clerk user ID
-      name: 'Test User',
-      email: 'test@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=test',
+      id: 'seed_user',
+      name: 'Seed User',
+      email: 'seed@example.com',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=seed',
     },
   })
 
-  // Create a general channel
-  const generalChannel = await prisma.channel.create({
-    data: {
+  // Create a general channel if it doesn't exist
+  const generalChannel = await prisma.channel.upsert({
+    where: { name: 'general' },
+    update: {},
+    create: {
       name: 'general',
       description: 'General discussion channel',
       isPrivate: false,
-      members: {
-        create: {
-          userId: user.id,
-        },
-      },
     },
   })
 
-  // Create some test messages
-  await prisma.message.create({
-    data: {
-      content: 'Hello, world! 👋',
+  // Ensure seed user is a member of the general channel
+  await prisma.membership.upsert({
+    where: {
+      userId_channelId: {
+        userId: user.id,
+        channelId: generalChannel.id,
+      },
+    },
+    update: {},
+    create: {
       userId: user.id,
       channelId: generalChannel.id,
     },

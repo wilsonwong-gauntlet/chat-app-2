@@ -1,57 +1,52 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
-import MessageList from './MessageList'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import Messages from './Messages'
 import MessageInput from './MessageInput'
 
-type Message = {
-  id: string
-  content: string
-  userId: string
-  createdAt: string
-}
+export default async function ChatArea({ channelId }: { channelId: string }) {
+  const { userId } = await auth()
 
-export default function ChatArea() {
-  const { user } = useUser()
-  const [messages, setMessages] = useState<Message[]>([])
-
-  useEffect(() => {
-    // Fetch messages from API
-    const fetchMessages = async () => {
-      const response = await fetch('/api/messages')
-      const data = await response.json()
-      setMessages(data)
-    }
-
-    fetchMessages()
-  }, [])
-
-  const handleSendMessage = async (content: string) => {
-    if (!user) return
-
-    const newMessage = {
-      content,
-      userId: user.id,
-      createdAt: new Date().toISOString(),
-    }
-
-    const response = await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newMessage),
-    })
-
-    if (response.ok) {
-      const savedMessage = await response.json()
-      setMessages([...messages, savedMessage])
-    }
+  if (!userId) {
+    redirect('/sign-in')
   }
+
+  // Verify channel access
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId,
+      channelId,
+    },
+  })
+
+  if (!membership) {
+    redirect('/')
+  }
+
+  const messages = await prisma.message.findMany({
+    where: {
+      channelId,
+    },
+    include: {
+      user: true,
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+  })
+
+  const channel = await prisma.channel.findUnique({
+    where: { id: channelId },
+    select: { name: true },
+  })
 
   return (
     <div className="flex-1 flex flex-col">
-      <MessageList messages={messages} />
-      <MessageInput onSendMessage={handleSendMessage} />
+      <div className="border-b p-4">
+        <h2 className="text-xl font-semibold">#{channel?.name}</h2>
+      </div>
+      <Messages initialMessages={messages} channelId={channelId} />
+      <MessageInput channelId={channelId} />
     </div>
   )
 }
