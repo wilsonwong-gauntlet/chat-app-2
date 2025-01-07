@@ -36,23 +36,25 @@ export default async function Home({ searchParams }: PageProps) {
     update: {},
     create: {
       name: 'general',
-      description: 'General discussion channel',
       isPrivate: false,
     },
   })
 
   // Ensure user is a member of the general channel
-  await prisma.membership.upsert({
+  await prisma.channelMember.upsert({
     where: {
       userId_channelId: {
         userId: user.id,
         channelId: generalChannel.id,
       },
     },
-    update: {},
+    update: {
+      isAdmin: true,
+    },
     create: {
       userId: user.id,
       channelId: generalChannel.id,
+      isAdmin: true,
     },
   })
 

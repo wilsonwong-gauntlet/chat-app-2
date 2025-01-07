@@ -12,7 +12,7 @@ export default async function ChatArea({ channelId }: { channelId: string }) {
   }
 
   // Verify channel access
-  const membership = await prisma.membership.findFirst({
+  const membership = await prisma.channelMember.findFirst({
     where: {
       userId,
       channelId,

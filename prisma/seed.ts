@@ -1,51 +1,46 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 async function main() {
-  // Create a test user (using a fixed ID for seeding)
+  // Create or get a test user
   const user = await prisma.user.upsert({
-    where: { id: 'seed_user' },
-    update: {
-      name: 'Seed User',
-      email: 'seed@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=seed',
-    },
+    where: { email: 'test@example.com' },
+    update: {},
     create: {
-      id: 'seed_user',
-      name: 'Seed User',
-      email: 'seed@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=seed',
+      id: 'test_user_id',
+      name: 'Test User',
+      email: 'test@example.com',
     },
   })
 
-  // Create a general channel if it doesn't exist
+  // Create or update general channel
   const generalChannel = await prisma.channel.upsert({
-    where: { name: 'general' },
+    where: {
+      name: "general",
+    },
     update: {},
     create: {
-      name: 'general',
-      description: 'General discussion channel',
+      name: "general",
       isPrivate: false,
     },
   })
 
-  // Ensure seed user is a member of the general channel
-  await prisma.membership.upsert({
+  // Add initial member (if needed)
+  await prisma.channelMember.upsert({
     where: {
       userId_channelId: {
         userId: user.id,
         channelId: generalChannel.id,
-      },
+      }
     },
-    update: {},
+    update: {
+      isAdmin: true,
+    },
     create: {
       userId: user.id,
       channelId: generalChannel.id,
+      isAdmin: true,
     },
   })
-
-  console.log('Seed data created successfully!')
 }
 
 main()

@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
   try {
     // First verify user has access to this channel
-    const membership = await prisma.membership.findFirst({
+    const membership = await prisma.channelMember.findFirst({
       where: {
         userId,
         channelId,
