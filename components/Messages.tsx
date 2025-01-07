@@ -15,6 +15,8 @@ interface MessagesProps {
   currentUserId: string
 }
 
+const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+
 export default function Messages({ 
   initialMessages, 
   channelId, 
@@ -95,7 +97,7 @@ export default function Messages({
       {messages.map((message) => {
         const user = 'sender' in message ? message.sender : message.user
         return (
-          <div key={message.id} className="flex items-start gap-3 group">
+          <div key={message.id} className="flex items-start gap-3 group relative hover:bg-gray-50 p-2 rounded-lg">
             <img
               src={user.avatar || '/default-avatar.png'}
               alt={`${user.firstName} ${user.lastName}`}
@@ -111,11 +113,25 @@ export default function Messages({
                 </span>
               </div>
               <p className="mt-1">{message.content}</p>
-              <MessageReactions 
-                message={message}
-                onReact={handleReaction}
-              />
+              {message.reactions?.length > 0 && (
+                <div className="flex gap-1 mt-1">
+                  {EMOJI_OPTIONS.map(emoji => {
+                    const count = message.reactions?.filter(r => r.emoji === emoji).length ?? 0;
+                    if (count === 0) return null;
+                    return (
+                      <span key={emoji} className="px-2 py-1 bg-gray-100 rounded-full text-sm">
+                        {emoji} {count}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+            <MessageReactions 
+              message={message}
+              onReact={handleReaction}
+              emojiOptions={EMOJI_OPTIONS}
+            />
           </div>
         )
       })}
