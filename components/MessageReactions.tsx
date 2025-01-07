@@ -7,14 +7,19 @@ interface MessageReactionsProps {
   message: Message;
   onReact: (messageId: string, emoji: string) => void;
   emojiOptions: string[];
+  currentUserId?: string;
 }
 
-export default function MessageReactions({ message, onReact, emojiOptions }: MessageReactionsProps) {
+export default function MessageReactions({ message, onReact, emojiOptions, currentUserId }: MessageReactionsProps) {
   const [showPicker, setShowPicker] = useState(false);
 
   const handleReaction = (emoji: string) => {
     onReact(message.id, emoji);
     setShowPicker(false);
+  };
+
+  const hasUserReacted = (emoji: string) => {
+    return message.reactions?.some(r => r.emoji === emoji && r.userId === currentUserId) ?? false;
   };
 
   return (
@@ -32,12 +37,14 @@ export default function MessageReactions({ message, onReact, emojiOptions }: Mes
         </button>
         
         {showPicker && (
-          <div className="absolute right-0 bottom-full mb-2 bg-white shadow-lg rounded-lg p-2 flex gap-1 z-10">
+          <div className="absolute right-0 bottom-full mb-2 bg-white shadow-lg rounded-lg p-2 flex gap-1 z-50">
             {emojiOptions.map(emoji => (
               <button
                 key={emoji}
                 onClick={() => handleReaction(emoji)}
-                className="hover:bg-gray-100 p-2 rounded"
+                className={`hover:bg-gray-100 p-2 rounded ${
+                  hasUserReacted(emoji) ? 'bg-blue-50' : ''
+                }`}
               >
                 {emoji}
               </button>

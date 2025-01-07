@@ -64,8 +64,12 @@ export default function Messages({
   }, [channelId, userId, isDM, currentUserId, router])
 
   useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, initialMessages])
 
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
@@ -131,6 +135,7 @@ export default function Messages({
               message={message}
               onReact={handleReaction}
               emojiOptions={EMOJI_OPTIONS}
+              currentUserId={user?.id}
             />
           </div>
         )

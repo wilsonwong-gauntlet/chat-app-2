@@ -29,7 +29,7 @@ export const CreateChannelModal = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
       <div className="bg-white p-6 rounded-lg w-96">
         <h2 className="text-xl font-bold mb-4">Create a new channel</h2>
         <form onSubmit={onSubmit} className="space-y-4">
