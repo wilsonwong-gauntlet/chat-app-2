@@ -17,16 +17,28 @@ export async function GET(req: Request) {
   }
 
   try {
-    // First verify user has access to this channel
-    const membership = await prisma.channelMember.findFirst({
-      where: {
-        userId,
-        channelId,
-      },
+    // First get the channel to check if it's private
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: { isPrivate: true }
     })
 
-    if (!membership) {
+    if (!channel) {
       return new NextResponse('Channel not found', { status: 404 })
+    }
+
+    // First verify user has access to this channel
+    if (channel.isPrivate) {
+      const membership = await prisma.channelMember.findFirst({
+        where: {
+          userId,
+          channelId,
+        },
+      })
+
+      if (!membership) {
+        return new NextResponse('Not authorized to access this channel', { status: 403 })
+      }
     }
 
     // Then fetch messages

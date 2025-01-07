@@ -12,15 +12,30 @@ export default async function ChatArea({ channelId }: { channelId: string }) {
   }
 
   // Verify channel access
-  const membership = await prisma.channelMember.findFirst({
-    where: {
-      userId,
-      channelId,
+  const channel = await prisma.channel.findUnique({
+    where: { id: channelId },
+    select: { 
+      name: true,
+      isPrivate: true,
     },
   })
 
-  if (!membership) {
+  if (!channel) {
     redirect('/')
+  }
+
+  // For private channels, verify membership
+  if (channel.isPrivate) {
+    const membership = await prisma.channelMember.findFirst({
+      where: {
+        userId,
+        channelId,
+      },
+    })
+  
+    if (!membership && channel.isPrivate) {
+      redirect('/')
+    }
   }
 
   const messages = await prisma.message.findMany({
@@ -33,11 +48,6 @@ export default async function ChatArea({ channelId }: { channelId: string }) {
     orderBy: {
       createdAt: 'asc',
     },
-  })
-
-  const channel = await prisma.channel.findUnique({
-    where: { id: channelId },
-    select: { name: true },
   })
 
   return (

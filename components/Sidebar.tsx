@@ -15,11 +15,16 @@ export default async function Sidebar({ currentChannelId, users }: Props) {
 
   const channels = await prisma.channel.findMany({
     where: {
-      members: {
-        some: {
-          userId,
+      OR: [
+        { isPrivate: false },  // Show all public channels
+        {
+          members: {
+            some: {
+              userId,
+            },
+          },
         },
-      },
+      ],
     },
     select: {
       id: true,
