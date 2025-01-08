@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '../../../lib/prisma'
 import { pusherServer } from '@/lib/pusher'
+import { generateDownloadURL } from '@/lib/s3'
 
 export async function GET(req: Request) {
   const { userId } = await auth()
@@ -69,19 +70,35 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const { content, channelId } = await req.json()
+    const { content, channelId, fileKey, fileName } = await req.json()
+    console.log('Received message data:', { content, channelId, fileKey, fileName })
+
+    if (!channelId) {
+      return new NextResponse('Channel ID missing', { status: 400 })
+    }
+
+    let fileUrl = null
+    if (fileKey) {
+      fileUrl = await generateDownloadURL(fileKey)
+      console.log('Generated file URL:', fileUrl)
+    }
 
     const message = await prisma.message.create({
       data: {
-        content,
+        content: content || '',
+        fileUrl,
+        fileName,
+        fileKey,
         userId,
         channelId,
       },
       include: {
         user: true,
         reactions: true,
-      },
+      }
     })
+    
+    console.log('Created message:', message)
 
     await pusherServer.trigger(`channel-${channelId}`, 'new-message', message)
 

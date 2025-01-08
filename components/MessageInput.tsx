@@ -9,7 +9,8 @@ import {
   List, 
   Smile, 
   Paperclip,
-  Send
+  Send,
+  Upload
 } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
 
@@ -19,21 +20,32 @@ interface Props {
   isDM?: boolean
 }
 
+interface FileData {
+  fileKey: string;
+  fileName: string;
+}
+
 export default function MessageInput({ channelId, receiverId, isDM }: Props) {
   const [content, setContent] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const [isUploading, setIsUploading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!content.trim() || isSending) return
+  const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent | null, fileData?: FileData) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
+    if ((!content.trim() && !fileData) || isSending) return;
 
-    setIsSending(true)
+    setIsSending(true);
     try {
-      const endpoint = isDM ? '/api/direct-messages' : '/api/messages'
-      const body = isDM ? { content, receiverId } : { content, channelId }
+      const endpoint = isDM ? '/api/direct-messages' : '/api/messages';
+      const body = isDM 
+        ? { content, receiverId, ...(fileData || {}) }
+        : { content, channelId, ...(fileData || {}) };
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -41,25 +53,25 @@ export default function MessageInput({ channelId, receiverId, isDM }: Props) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to send message')
+      if (!response.ok) throw new Error('Failed to send message');
 
-      setContent('')
-      router.refresh()
+      setContent('');
+      router.refresh();
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Error sending message:', error);
     } finally {
-      setIsSending(false)
+      setIsSending(false);
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
+      e.preventDefault();
+      handleSubmit(e);
     }
-  }
+  };
 
   const insertTextFormat = (format: string) => {
     const input = document.getElementById('messageInput') as HTMLTextAreaElement
@@ -89,21 +101,49 @@ export default function MessageInput({ channelId, receiverId, isDM }: Props) {
     setContent(newContent)
   }
 
-  const handleFileClick = () => {
-    fileInputRef.current?.click()
-  }
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handle file upload logic here
-    const files = e.target.files
-    if (files && files.length > 0) {
-      // Implement file upload logic
-      console.log('Files selected:', files)
+    try {
+      setIsUploading(true);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+        }),
+      });
+      
+      const { uploadURL, key } = await response.json();
+      
+      await fetch(uploadURL, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      });
+      
+      // Send message with file information
+      await handleSubmit(null, {
+        fileKey: key,
+        fileName: file.name,
+      });
+      
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setIsUploading(false);
     }
-  }
+  };
+
+  const onFormSubmit = (e: React.FormEvent) => {
+    handleSubmit(e);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="border rounded-md p-2 bg-white">
+    <form onSubmit={onFormSubmit} className="border rounded-md p-2 bg-white">
       {/* Formatting toolbar */}
       <div className="flex items-center gap-2 pb-2 border-b">
         <button type="button" onClick={() => insertTextFormat('bold')} className="p-1 hover:bg-gray-100 rounded">
@@ -155,17 +195,16 @@ export default function MessageInput({ channelId, receiverId, isDM }: Props) {
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleFileChange}
             className="hidden"
-            multiple
+            onChange={handleFileUpload}
           />
           <button 
             type="button"
-            onClick={handleFileClick}
+            onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
             className="p-2 hover:bg-gray-100 rounded disabled:opacity-50"
           >
-            <Paperclip size={16} />
+            <Upload className="w-5 h-5" />
           </button>
           <button
             type="submit"
@@ -176,6 +215,12 @@ export default function MessageInput({ channelId, receiverId, isDM }: Props) {
           </button>
         </div>
       </div>
+
+      {isUploading && (
+        <div className="text-xs text-zinc-400">
+          Uploading file...
+        </div>
+      )}
     </form>
   )
 }

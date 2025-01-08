@@ -51,6 +51,9 @@ model ChannelMember {
 model Message {
   id        String   @id @default(cuid())
   content   String
+  fileUrl   String?
+  fileName  String?
+  fileKey   String?
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   channelId String
@@ -63,6 +66,9 @@ model Message {
 model DirectMessage {
   id         String     @id @default(cuid())
   content    String
+  fileUrl    String?
+  fileName   String?
+  fileKey    String?
   senderId   String
   sender     User       @relation("SentMessages", fields: [senderId], references: [id])
   receiverId String

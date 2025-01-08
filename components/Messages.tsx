@@ -145,6 +145,40 @@ export default function Messages({
                 </div>
               )}
             </div>
+            {message.fileUrl && message.fileName && (
+              <div className="mt-2 p-2 bg-gray-100 rounded-md flex items-center gap-2 max-w-xs hover:bg-gray-200 transition-colors">
+                <svg
+                  className="w-8 h-8 text-gray-500 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {message.fileName}
+                  </p>
+                  <a
+                    href={message.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    Download
+                  </a>
+                </div>
+              </div>
+            )}
             <MessageReactions 
               message={message}
               onReact={handleReaction}

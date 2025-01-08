@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { pusherServer } from '@/lib/pusher'
+import { generateDownloadURL } from '@/lib/s3'
 
 export async function GET(req: Request) {
   const { userId } = await auth()
@@ -48,23 +49,39 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const { content, receiverId } = await req.json()
+    const { content, receiverId, fileKey, fileName } = await req.json()
+    console.log('Received DM data:', { content, receiverId, fileKey, fileName })
+
+    if (!receiverId) {
+      return new NextResponse('Receiver ID missing', { status: 400 })
+    }
+
+    let fileUrl = null
+    if (fileKey) {
+      fileUrl = await generateDownloadURL(fileKey)
+      console.log('Generated file URL:', fileUrl)
+    }
 
     const message = await prisma.directMessage.create({
       data: {
-        content,
+        content: content || '',
+        fileUrl,
+        fileName,
+        fileKey,
         senderId: userId,
         receiverId,
       },
       include: {
         sender: true,
-        receiver: true,
         reactions: true,
-      },
+      }
     })
 
-    // Trigger Pusher event for real-time updates
-    await pusherServer.trigger(`private-user-${receiverId}`, 'new-dm', message)
+    console.log('Created DM:', message)
+
+    // Trigger Pusher events for both sender and receiver
+    const channelName = `private-user-${receiverId}`
+    await pusherServer.trigger(channelName, 'new-message', message)
 
     return NextResponse.json(message)
   } catch (error) {
